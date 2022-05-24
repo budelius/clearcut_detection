@@ -7,7 +7,7 @@ db_stage:
   env_file:
     - db.env
   volumes:
-    - ./db-data_stage/data:/var/lib/postgresql/data
+    - ~/clearcut/db-data_stage/data:/var/lib/postgresql/data
     - ./:/code
 
 model_stage_2:
