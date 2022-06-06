@@ -296,7 +296,11 @@ def postprocessing(tile, cloud_files, clearcuts, src_crs):
 def parse_args():
     parser = argparse.ArgumentParser(description='Script for predicting masks.')
     parser.add_argument(
-        '--image_path', '-ip', dest='image_path',
+        '--image_path_1', '-ip', dest='image_path_1',
+        type=str, required=True, help='Path to source image'
+    )
+    parser.add_argument(
+        '--image_path_2', '-ip', dest='image_path_2',
         type=str, required=True, help='Path to source image'
     )
     parser.add_argument(
@@ -336,8 +340,8 @@ def main():
 
     if not args.polygonize_only:
         raster_array, meta = predict_raster(
-            args.image_path,
-            args.image_path,
+            args.image_path_1,
+            args.image_path_2,
             args.channels, args.network, args.model_weights_path
         )
         save_raster(raster_array, meta, args.save_path, filename)
@@ -351,7 +355,10 @@ def main():
     logging.info('Polygonize raster array of clearcuts...')
     clearcuts = polygonize(raster_array > args.threshold, meta)
     logging.info('Filter polygons of clearcuts')
-    polygons = postprocessing(args.image_path, clearcuts, meta['crs'])
+
+    cloud_files = []
+
+    polygons = postprocessing(args.image_path, cloud_files, clearcuts, meta['crs'])
     
     save_polygons(polygons, args.save_path, predicted_filename)
 
