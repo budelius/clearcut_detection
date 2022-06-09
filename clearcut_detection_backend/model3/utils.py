@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2 import service_account
 import geopandas as gpd
-from config import SCOPES, LANDCOVER_POLYGONS_PATH, SENTINEL_TILES, LANDCOVER_GEOJSON
+from config import SCOPES, LANDCOVER_POLYGONS_PATH, SENTINEL_TILES, LANDCOVER_GEOJSON, LANDCOVER_FILENAME
 
 logging.basicConfig(format='%(asctime)s %(message)s')
 
@@ -26,13 +26,16 @@ class LandcoverPolygons:
     :return polygons: list of forest polygons within a tile in CRS of a S2A image
     """
 
-    def __init__(self, tile, crs):
+    def __init__(self, tile, crs, path=LANDCOVER_POLYGONS_PATH):
         self.tile = tile
+        self.path = path
+        self.sentinel_tiles = Path(self.path) / LANDCOVER_FILENAME
+        self.geojson = Path(self.path) / 'landcover_polygons.geojson'
         self.crs = crs
         gpd.io.file.fiona.drvsupport.supported_drivers['KML'] = 'rw'
 
     def get_polygon(self):
-        polygon_path = LANDCOVER_POLYGONS_PATH / f'{self.tile}.geojson'
+        polygon_path = Path(self.path) / f'{self.tile}.geojson'
         logging.info(f'LANDCOVER_POLYGONS_PATH: {polygon_path}')
         if polygon_path.is_file():
             logging.info(f'{self.tile} forests polygons file exists.')
@@ -50,19 +53,19 @@ class LandcoverPolygons:
     
     def create_polygon(self):
         polygons = []
-        if SENTINEL_TILES.is_file():
-            logging.info(f'read forests_polygons_file: {SENTINEL_TILES}, for tile {self.tile}')
-            sentinel_tiles = gpd.read_file(SENTINEL_TILES, driver='KML')
+        if self.sentinel_tiles.is_file():
+            logging.info(f'read forests_polygons_file: {self.sentinel_tiles}, for tile {self.tile}')
+            sentinel_tiles = gpd.read_file(self.sentinel_tiles, driver='KML')
             sentinel_tiles = sentinel_tiles[sentinel_tiles['Name'] == self.tile]
             logging.info(f'sentinel_tiles for {self.tile}: {sentinel_tiles}')
             bounding_polygon = sentinel_tiles['geometry'].values[0]
-            polygons = gpd.read_file(LANDCOVER_GEOJSON)
+            polygons = gpd.read_file(self.geojson)
             polygons = polygons[polygons['geometry'].intersects(bounding_polygon)]
-            polygon_path = LANDCOVER_POLYGONS_PATH / f'{self.tile}.geojson'
+            polygon_path = Path(self.path)  / f'{self.tile}.geojson'
             logging.info(f'forests_polygons_file_path: {polygon_path}')
             polygons.to_file(polygon_path, driver='GeoJSON')
         else:
-            logging.error(f'{SENTINEL_TILES} doth not exists')
+            logging.error(f'{self.sentinel_tiles} doth not exists')
             raise FileNotFoundError
         return polygons
 

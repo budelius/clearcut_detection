@@ -5,8 +5,8 @@ import logging
 import rasterio
 import numpy as np
 from osgeo import gdal
-from tiff_prepare.gdal_calc import Calc
-from tiff_prepare.gdal_merge import merge_img
+from gdal_calc import Calc
+from gdal_merge import merge_img
 
 
 logger = logging.getLogger('prepare_tif')

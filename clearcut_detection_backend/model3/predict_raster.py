@@ -240,7 +240,7 @@ def morphological_transform(img):
     return closing
 
 
-def postprocessing(tile, cloud_files, clearcuts, src_crs):
+def postprocessing(tile, cloud_files, clearcuts, src_crs, landcover_polygons_path):
 
     def get_intersected_polygons(polygons, masks, mask_column_name):
         """Finding in GeoDataFrame with clearcuts the masked polygons.
@@ -267,7 +267,7 @@ def postprocessing(tile, cloud_files, clearcuts, src_crs):
         polygons[mask_column_name] = masked_values
         return polygons
 
-    landcover = LandcoverPolygons(tile, src_crs)
+    landcover = LandcoverPolygons(tile, src_crs, landcover_polygons_path)
     forest_polygons = landcover.get_polygon()
 
     # cloud_files = [f"{img_path}/{tile}_{i}/clouds.tiff" for i in range(DATES_FOR_TILE)]
@@ -296,11 +296,11 @@ def postprocessing(tile, cloud_files, clearcuts, src_crs):
 def parse_args():
     parser = argparse.ArgumentParser(description='Script for predicting masks.')
     parser.add_argument(
-        '--image_path_1', '-ip', dest='image_path_1',
+        '--image_path_1', '-ip1', dest='image_path_1',
         type=str, required=True, help='Path to source image'
     )
     parser.add_argument(
-        '--image_path_2', '-ip', dest='image_path_2',
+        '--image_path_2', '-ip2', dest='image_path_2',
         type=str, required=True, help='Path to source image'
     )
     parser.add_argument(
@@ -335,31 +335,32 @@ def parse_args():
 def main():
     args = parse_args()
 
-    filename = re.split(r'[./]', args.image_path)[-1]
+    filename = re.split(r'[./]', args.image_path_2)[-1]
     predicted_filename = f'predicted_{filename}'
 
-    if not args.polygonize_only:
-        raster_array, meta = predict_raster(
-            args.image_path_1,
-            args.image_path_2,
-            args.channels, args.network, args.model_weights_path
-        )
-        save_raster(raster_array, meta, args.save_path, filename)
-    else:
-        with rasterio.open(os.path.join(args.save_path, f'{predicted_filename}.tif')) as src:
-            raster_array = src.read()
-            raster_array = np.moveaxis(raster_array, 0, -1)
-            meta = src.meta
-            src.close()
+    # if not args.polygonize_only:
+    #     raster_array, meta = predict_raster(
+    #         args.image_path_1,
+    #         args.image_path_2,
+    #         args.channels, args.network, args.model_weights_path
+    #     )
+    #     save_raster(raster_array, meta, args.save_path, filename)
+    # else:
+    #     with rasterio.open(os.path.join(args.save_path, f'{predicted_filename}.tif')) as src:
+    #         raster_array = src.read()
+    #         raster_array = np.moveaxis(raster_array, 0, -1)
+    #         meta = src.meta
+    #         src.close()
 
-    logging.info('Polygonize raster array of clearcuts...')
-    clearcuts = polygonize(raster_array > args.threshold, meta)
-    logging.info('Filter polygons of clearcuts')
+    # logging.info('Polygonize raster array of clearcuts...')
+    # clearcuts = polygonize(raster_array > args.threshold, meta)
+    # logging.info('Filter polygons of clearcuts')
 
     cloud_files = []
 
-    polygons = postprocessing(args.image_path, cloud_files, clearcuts, meta['crs'])
-    
+    #polygons = postprocessing(args.image_path_1, cloud_files, clearcuts, meta['crs'], '/mnt/d/beetlefortech/data/landcover')
+    polygons = postprocessing('32TPT', cloud_files, [], None, '/mnt/d/beetlefortech/data/landcover')
+
     save_polygons(polygons, args.save_path, predicted_filename)
 
 

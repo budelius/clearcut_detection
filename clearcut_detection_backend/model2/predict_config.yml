@@ -9,7 +9,7 @@ models:
       - b12
       - ndvi
       - ndmi
-    weights: /model/unet_v4.pth
+    weights: /model/unet_v4.pt
 
 prediction:
   save_path: data
