@@ -4,6 +4,7 @@ clearcut_detection_backend/model/predicted/
 logs.txt
 data/
 logs/
+venv-37/
 venv/
 _install/
 
@@ -84,3 +85,5 @@ dyman_settings.py
 gcp_config.ini
 prod.sql
 prod.json
+
+tools

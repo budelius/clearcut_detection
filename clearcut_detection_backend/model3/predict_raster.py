@@ -242,7 +242,7 @@ def morphological_transform(img):
     return closing
 
 
-def postprocessing(tile, cloud_files, clearcuts, src_crs):
+def postprocessing(tile, cloud_files, clearcuts, src_crs, landcover_polygons_path):
 
     def get_intersected_polygons(polygons, masks, mask_column_name):
         """Finding in GeoDataFrame with clearcuts the masked polygons.
@@ -269,7 +269,7 @@ def postprocessing(tile, cloud_files, clearcuts, src_crs):
         polygons[mask_column_name] = masked_values
         return polygons
 
-    landcover = LandcoverPolygons(tile, src_crs)
+    landcover = LandcoverPolygons(tile, src_crs, landcover_polygons_path)
     forest_polygons = landcover.get_polygon()
 
     # cloud_files = [f"{img_path}/{tile}_{i}/clouds.tiff" for i in range(DATES_FOR_TILE)]
@@ -356,14 +356,15 @@ def main():
             meta = src.meta
             src.close()
 
-    logging.info('Polygonize raster array of clearcuts...')
-    clearcuts = polygonize(raster_array > args.threshold, meta)
-    logging.info('Filter polygons of clearcuts')
+    # logging.info('Polygonize raster array of clearcuts...')
+    # clearcuts = polygonize(raster_array > args.threshold, meta)
+    # logging.info('Filter polygons of clearcuts')
 
     cloud_files = []
 
-    polygons = postprocessing(args.image_path, cloud_files, clearcuts, meta['crs'])
-    
+    #polygons = postprocessing(args.image_path_1, cloud_files, clearcuts, meta['crs'], '/mnt/d/beetlefortech/data/landcover')
+    polygons = postprocessing('32TPT', cloud_files, [], None, '/mnt/d/beetlefortech/data/landcover')
+
     save_polygons(polygons, args.save_path, predicted_filename)
 
 
