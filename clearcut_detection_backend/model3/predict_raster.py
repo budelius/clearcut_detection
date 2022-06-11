@@ -24,10 +24,12 @@ from config import CLOUDS_PROBABILITY_THRESHOLD, NEAREST_POLYGONS_NUMBER, DATES_
 
 warnings.filterwarnings('ignore')
 
-print("device name: {}".format(torch.cuda.get_device_name()))
 print("torch version: {}".format(torch.__version__))
-print("torch cuda version: {}".format(torch.version.cuda))
-print("torch cudnn version: {}".format(torch.backends.cudnn.version()))
+if torch.cuda.is_available():
+    print("device name: {}".format(torch.cuda.get_device_name()))
+    print("torch cuda version: {}".format(torch.version.cuda))
+    print("torch cudnn version: {}".format(torch.backends.cudnn.version()))
+
 #torch.backends.cudnn.enabled = False
 
 
@@ -296,12 +298,12 @@ def postprocessing(tile, cloud_files, clearcuts, src_crs):
 def parse_args():
     parser = argparse.ArgumentParser(description='Script for predicting masks.')
     parser.add_argument(
-        '--image_path_1', '-ip', dest='image_path_1',
-        type=str, required=True, help='Path to source image'
+        '--image_path_current', '-ipc', dest='image_path_current',
+        type=str, required=True, help='Path to current image'
     )
     parser.add_argument(
-        '--image_path_2', '-ip', dest='image_path_2',
-        type=str, required=True, help='Path to source image'
+        '--image_path_previous', '-ipp', dest='image_path_previous',
+        type=str, required=True, help='Path to previous image'
     )
     parser.add_argument(
         '--model_weights_path', '-mwp', dest='model_weights_path',
@@ -331,17 +333,19 @@ def parse_args():
 
     return parser.parse_args()
 
+# fix on windows
+#os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 def main():
     args = parse_args()
 
-    filename = re.split(r'[./]', args.image_path)[-1]
+    filename = re.split(r'[./]', args.image_path_current)[-1]
     predicted_filename = f'predicted_{filename}'
 
     if not args.polygonize_only:
         raster_array, meta = predict_raster(
-            args.image_path_1,
-            args.image_path_2,
+            args.image_path_current,
+            args.image_path_previous,
             args.channels, args.network, args.model_weights_path
         )
         save_raster(raster_array, meta, args.save_path, filename)

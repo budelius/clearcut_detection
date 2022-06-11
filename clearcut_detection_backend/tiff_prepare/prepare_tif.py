@@ -5,12 +5,10 @@ import logging
 import rasterio
 import numpy as np
 from osgeo import gdal
-from tiff_prepare.gdal_calc import Calc
-from tiff_prepare.gdal_merge import merge_img
-
+from gdal_calc import Calc
+from gdal_merge import merge_img
 
 logger = logging.getLogger('prepare_tif')
-
 
 def scale_img(img_file, output_file=None, min_value=0, max_value=255, output_type='Byte', prepared=None):
     try:
