@@ -285,7 +285,7 @@ def postprocessing(tile, cloud_files, clearcuts, src_crs, landcover_polygons_pat
 
     polygons = geopandas.GeoDataFrame(polygons, crs=src_crs)
     
-    polygons = get_intersected_polygons(polygons, cloud_polygons, 'clouds')
+    #polygons = get_intersected_polygons(polygons, cloud_polygons, 'clouds')
     polygons = get_intersected_polygons(polygons, forest_polygons, 'forest')
     return polygons
 
@@ -344,6 +344,8 @@ def main():
 
     filename = re.split(r'[./]', args.image_path_current)[-1]
     predicted_filename = f'predicted_{filename}'
+
+    wandb.init(project="clearcut", entity="pseekoo")
 
     start = time.process_time()
 
