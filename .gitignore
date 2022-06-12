@@ -87,3 +87,5 @@ prod.sql
 prod.json
 
 tools
+
+wandb
