@@ -28,8 +28,9 @@ SQLAlchemy==1.4.37
 #psycopg2-binary==2.9.3
 
 catalyst==22.4
-torch==1.11.0
-torchvision==0.12.0
+torch==torch-1.13.0.dev20220612
+torchvision==0.14.0.dev20220609
+torchaudio==0.14.0.dev20220603
 segmentation-models-pytorch==0.2.1
 
 tensorflow-macos==2.9.2
