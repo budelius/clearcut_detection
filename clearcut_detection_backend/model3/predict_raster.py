@@ -388,7 +388,9 @@ if __name__ == '__main__':
         print("torch cuda version: {}".format(torch.version.cuda))
         print("torch cudnn version: {}".format(torch.backends.cudnn.version()))
 
-    if torch.has_mps or torch.backends.mps.is_available():
-        print("mps available")
+    if hasattr(torch, 'has_mps'):
+        # torch.backends.mps.is_available():
+        if torch.has_mps:
+            print("mps available")
 
     main()
