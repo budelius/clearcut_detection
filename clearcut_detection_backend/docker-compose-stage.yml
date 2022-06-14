@@ -18,7 +18,7 @@ model_stage_2:
 #    - ./model2/rabbitmq.env
   volumes:
     - ./model2/:/model
-    - /mnt/d/beetlefortech/data/:/data
+    - ./data/:/model/data
   working_dir: /model
   environment:
     - DB_HOST=db_stage
@@ -61,7 +61,7 @@ django_stage:
     - UPLOAD_TO_MAPBOX=1  # skip uploading to mapbox server
   volumes:
     - ./:/code
-    - /mnt/d/beetlefortech/data/:/data
+    - ./data/:/data
   working_dir: /code
   links:
     - "db_stage"

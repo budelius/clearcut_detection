@@ -1,9 +1,21 @@
 
 ```bash
 
-docker-compose -f docker-compose-dev.yml up -d
+docker build -f postgis.Dockerfile -t clearcut_detection/postgis .
+docker build -f django.Dockerfile -t clearcut_detection/backend .
+docker build -f model2/model.Dockerfile -t clearcut_detection/model2 .
 
-docker build -f model.Dockerfile -t clearcut_detection/model2 .
+docker-compose -f docker-compose-wsl.yml up -d db_stage
+docker-compose -f ./docker-compose-wsl.yml run --rm django_stage python /code/manage.py migrate --noinput
+docker-compose -f ./docker-compose-wsl.yml run --rm django_stage python /code/manage.py loaddata db.json
+docker-compose -f ./docker-compose-wsl.yml run --rm django_stage python /code/manage.py createsuperuser
+
+#docker-compose -f docker-compose-wsl.yml up -d
+
+docker-compose -f docker-compose-wsl.yml up
+
+docker-compose -f ./docker-compose-wsl.yml run django_stage python /code/update_all.py --exit-code-from django_stage --abort-on-container-exit django_stage
+
 
 ```
 
