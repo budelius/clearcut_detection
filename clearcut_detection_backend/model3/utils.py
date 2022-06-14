@@ -63,7 +63,10 @@ class LandcoverPolygons:
             polygons = polygons[polygons['geometry'].intersects(bounding_polygon)]
             polygon_path = Path(self.path)  / f'{self.tile}.geojson'
             logging.info(f'forests_polygons_file_path: {polygon_path}')
-            polygons.to_file(polygon_path, driver='GeoJSON')
+            if len(polygons) > 0:
+                polygons.to_file(polygon_path, driver='GeoJSON')
+            else:
+                logging.info('No forests polygons.')
         else:
             logging.error(f'{self.sentinel_tiles} doth not exists')
             raise FileNotFoundError

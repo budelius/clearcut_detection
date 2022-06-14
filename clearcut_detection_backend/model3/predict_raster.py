@@ -1,5 +1,6 @@
 import os
 import platform
+import time
 import re
 import cv2
 import torch
@@ -9,7 +10,6 @@ import argparse
 import geopandas
 import numpy as np
 import segmentation_models_pytorch as smp
-#from catalyst.dl.utils import UtilsFactory
 from scipy import spatial
 from shapely.geometry import Polygon
 from torchvision import transforms
@@ -21,33 +21,30 @@ from skimage.exposure import match_histograms
 from utils import LandcoverPolygons
 import warnings
 from config import CLOUDS_PROBABILITY_THRESHOLD, NEAREST_POLYGONS_NUMBER, DATES_FOR_TILE
-
+import wandb
 
 warnings.filterwarnings('ignore')
-
-
-
-#torch.backends.cudnn.enabled = False
-
-
 logging.basicConfig(format='%(asctime)s %(message)s')
-
 
 def load_model(network, model_weights_path, channels, neighbours):
     model = get_model(network)
     device = torch.device("cpu")
+    map_location = device
     if torch.cuda.is_available():
         device = torch.device("cuda")
-        #model.cuda()
-    #if torch.has_mps:
-        # device = torch.device("mps")
+        map_location = torch.device(device)
+    if hasattr(torch, 'has_mps'):
+        if torch.has_mps:
+            device = torch.device("mps")
+            map_location = torch.device(torch.device("cpu"))
 
     model.encoder.conv1 = nn.Conv2d(
         count_channels(channels)*neighbours, 64, kernel_size=(7, 7),
         stride=(2, 2), padding=(3, 3), bias=False
     )
 
-    model.load_state_dict(torch.load(model_weights_path, map_location=torch.device(device)))
+    model_weights = torch.load(model_weights_path, map_location=map_location)
+    model.load_state_dict(model_weights)
     return model, device
 
 def predict(image_tensor, model, channels, neighbours, size, device):
@@ -288,7 +285,7 @@ def postprocessing(tile, cloud_files, clearcuts, src_crs, landcover_polygons_pat
 
     polygons = geopandas.GeoDataFrame(polygons, crs=src_crs)
     
-    polygons = get_intersected_polygons(polygons, cloud_polygons, 'clouds')
+    #polygons = get_intersected_polygons(polygons, cloud_polygons, 'clouds')
     polygons = get_intersected_polygons(polygons, forest_polygons, 'forest')
     return polygons
 
@@ -348,6 +345,10 @@ def main():
     filename = re.split(r'[./]', args.image_path_current)[-1]
     predicted_filename = f'predicted_{filename}'
 
+    wandb.init(project="clearcut", entity="pseekoo")
+
+    start = time.process_time()
+
     if not args.polygonize_only:
         raster_array, meta = predict_raster(
             args.image_path_current,
@@ -362,9 +363,10 @@ def main():
             meta = src.meta
             src.close()
 
+    print("prediction took: {}".format(time.process_time() - start))
+
     logging.info('Polygonize raster array of clearcuts...')
-    clearcuts = []
-    # clearcuts = polygonize(raster_array > args.threshold, meta)
+    clearcuts = polygonize(raster_array > args.threshold, meta)
     logging.info('Filter polygons of clearcuts')
 
     cloud_files = []
@@ -372,8 +374,7 @@ def main():
     landcover_path = args.landcover_path
     tile_id = args.tile_id
 
-    #polygons = postprocessing(tile_id, cloud_files, clearcuts, meta['crs'], landcover_path)
-    polygons = postprocessing(tile_id, cloud_files, clearcuts, None, landcover_path)
+    polygons = postprocessing(tile_id, cloud_files, clearcuts, meta['crs'], landcover_path)
 
     save_polygons(polygons, args.save_path, predicted_filename)
 
@@ -387,8 +388,11 @@ if __name__ == '__main__':
         print("device count: {}".format(torch.cuda.device_count()))
         print("torch cuda version: {}".format(torch.version.cuda))
         print("torch cudnn version: {}".format(torch.backends.cudnn.version()))
+        # torch.backends.cudnn.enabled = False
 
-    if torch.has_mps or torch.backends.mps.is_available():
-        print("mps available")
+    if hasattr(torch, 'has_mps'):
+        # torch.backends.mps.is_available():
+        if torch.has_mps:
+            print("mps available")
 
     main()
