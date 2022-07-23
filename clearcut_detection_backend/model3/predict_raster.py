@@ -285,7 +285,7 @@ def postprocessing(tile, cloud_files, clearcuts, src_crs, landcover_polygons_pat
 
     polygons = geopandas.GeoDataFrame(polygons, crs=src_crs)
     
-    #polygons = get_intersected_polygons(polygons, cloud_polygons, 'clouds')
+    polygons = get_intersected_polygons(polygons, cloud_polygons, 'clouds')
     polygons = get_intersected_polygons(polygons, forest_polygons, 'forest')
     return polygons
 
@@ -343,7 +343,7 @@ def main():
     args = parse_args()
 
     filename = re.split(r'[./]', args.image_path_current)[-1]
-    predicted_filename = f'predicted_{filename}'
+    predicted_filename = f'predicted_{filename}.tif'
 
     wandb.init(project="clearcut", entity="pseekoo")
 
@@ -361,6 +361,7 @@ def main():
             raster_array = src.read()
             raster_array = np.moveaxis(raster_array, 0, -1)
             meta = src.meta
+            logging.info(meta)
             src.close()
 
     print("prediction took: {}".format(time.process_time() - start))
